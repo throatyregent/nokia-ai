@@ -7,14 +7,18 @@ app.get('/api/chat', async (req, res) => {
     const userText = req.query.text;
     if (!userText) return res.send("Pustoy zapros");
     try {
-        const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-            // Самый правильный автоматический выбор БЕСПЛАТНОЙ модели на сегодня
+        const apiKey = process.env.MY_AI_KEY;
+        if (!apiKey) return res.send("Oshibka: Klyuch ne nastroen v paneli Render!");
+
+        // Исправленный и самый надежный способ передачи заголовка:
+        const authHeader = "Bearer " + apiKey.trim();
+
+        const response = await axios.post('https://openrouter.ai', {
             model: "openrouter/free", 
             messages: [{ role: "user", content: userText }]
         }, {
             headers: {
-                // ВНИМАНИЕ: Замените фразу после Bearer на ваш реальный ключ!
-                'Authorization': 'Bearer ВАШ_КЛЮЧ_ОТ_OPENROUTER',
+                'Authorization': authHeader,
                 'Content-Type': 'application/json'
             }
         });
@@ -24,7 +28,7 @@ app.get('/api/chat', async (req, res) => {
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
             res.send(aiReply);
         } else {
-            res.send("ИИ вернул пустой ответ. Проверьте ваш API-ключ в index.js.");
+            res.send("ИИ вернул пустой ответ. Проверьте лимиты аккаунта.");
         }
     } catch (e) { 
         res.send("Ошибка сервера: " + e.message); 
